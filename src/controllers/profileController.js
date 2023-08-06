@@ -79,11 +79,13 @@ const addRequest = async (req,res) => {
         const user = await Profile.findOne({email : req.auth.user.email});
         const receiver = await Profile.findOne({email : req.body.email})
         if(!receiver){
-            return res.status(404).send('user does not exist');
+            return res.status(200).send({error : 'Not on Vendorverse'});
         }
         const existingId = receiver.requests.find((id) => id.equals(user._id))
-        if(existingId){
-            return res.status(400).send('request already exists')
+        const existingConnection = receiver.connections.find((id) => id.equals(user._id))
+        const existingRequest = user.requests.find((id) => id.equals(receiver._id))
+        if(existingId || existingConnection || existingRequest){
+            return res.status(200).send({error : 'request send already'})
         }
         receiver.requests[receiver.requests.length] = user._id;
         await receiver.populate({path : 'requests'})
