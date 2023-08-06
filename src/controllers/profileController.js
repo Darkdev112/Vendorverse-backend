@@ -40,9 +40,9 @@ const getConnections = async (req,res) => {
        }
        await detailedUser.populate({
         path : 'connections',
-        select : 'fullname email occupation work profilePic'
+        select : 'fullname email occupation work profilePic linkedIn twitter location'
     })
-       res.status(200).send({user : detailedUser.connections}) 
+       res.status(200).send({user : detailedUser.connections, requests : detailedUser.requests}) 
     }catch (error){
         res.status(400).send({error});
     }
@@ -120,7 +120,7 @@ const manageRequest = async(req,res) => {
 
         const updatedUser = await userDetails.save();
         await senderDetails.save()
-        res.status(200).send({user : updatedUser})
+        res.status(200).send({user : updatedUser,success : req.query.success})
         
     } catch (error) {
         res.status(400).send({error})
