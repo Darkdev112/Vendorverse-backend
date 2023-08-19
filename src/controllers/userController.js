@@ -1,12 +1,23 @@
-const {User, Session, Profile} = require('../models')
+const {User, Session, Profile, WorkspaceM, WorkspaceD, WorkspaceR} = require('../models')
 
 const signup = async(req,res) => {
     try {
         const user = new User(req.body)
         const profile = new Profile({email : req.body.email, occupation : req.body.occupation})
+        let workspace;
+        if(req.body.occupation === "Manufacturer"){
+            workspace = new WorkspaceM({email : req.body.email, owner : profile._id})
+        }
+        else if(req.body.occupation === "Distributor"){
+            workspace = new WorkspaceD({email : req.body.email, owner : profile._id})
+        }
+        else{
+            workspace = new WorkspaceR({email : req.body.email, owner : profile._id})
+        }
         const  {sessionToken, expiresAt} = await user.generateCookie()
         await user.save();
         await profile.save();
+        await workspace.save();
         res.cookie('session_token', sessionToken, {maxAge : expiresAt})
         res.status(201).send({user, sessionToken})
     } catch (error) {

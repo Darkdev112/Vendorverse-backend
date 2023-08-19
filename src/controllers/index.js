@@ -1,7 +1,11 @@
 const userController = require('./userController')
 const profileController = require('./profileController')
+const retailerController = require('./retailerController')
+const distributorController = require('./distributorController')
 
 module.exports = {
     userController,
-    profileController
+    profileController,
+    retailerController,
+    distributorController
 }

@@ -3,7 +3,7 @@ const dotenv = require('dotenv').config({path : path.join(__dirname , '../config
 const express = require('express')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
-const {userRoute, profileRoute} = require('./routes')
+const {userRoute, profileRoute, retailerRoute, distributorRoute} = require('./routes')
 
 require('./db/mongoose')
 const app = express()
@@ -17,6 +17,8 @@ app.use(cors({
 
 app.use(userRoute);
 app.use(profileRoute);
+app.use(retailerRoute);
+app.use(distributorRoute);
 
 app.get('/', async (req,res) => {
     res.status(200).send("Express App")
