@@ -5,6 +5,9 @@ const InventorySchema = new mongoose.Schema({
         type : String,
         required : true
     },
+    product_details : {
+        type : String,
+    },
     product_quantity : {
         type : Number,
         required : true
@@ -29,6 +32,10 @@ const InventorySchema = new mongoose.Schema({
         required : true,
         enum : ["WorkspaceD", "WorkspaceR", "WorkspaceM"]
     },
+    item_type : {
+        type : String,
+        enum : ["raw", "processed"]
+    }
 },{
     strict : true,
     versionKey : false,

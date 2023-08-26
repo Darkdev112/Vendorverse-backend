@@ -93,6 +93,7 @@ const paySentOrder = async (req, res) => {
             }
             workspace.vendorPoints = workspace.vendorPoints - order.to_pay
             order.has_paid = true
+            order.status = "completed"
             await workspace.save()
             await order.save()
             return res.status(200).send({ msg: "Payment made", order: order, workspace: workspace })
@@ -118,14 +119,14 @@ const moveOrder = async (req, res) => {
             const item = new Inventory({
                 product_name: order.product_name,
                 product_quantity: order.product_quantity,
-                product_description: order.product_description,
+                product_details: order.product_details,
                 product_expiry: order.product_expiry,
                 cost_per_unit: order.to_pay / order.product_quantity,
                 ownerSelect: "WorkspaceD",
                 owner: workspace._id,
             })
             await order.deleteOne();
-            await workspace.save();
+            await item.save();
             res.status(200).send({ msg: "saved to inventory", workspace })
         }
         else if (order.status === "completed" && order.isOrder) {
@@ -143,7 +144,7 @@ const moveOrder = async (req, res) => {
             res.status(200).send({ msg: "target order updated", targetOrder })
         }
         else {
-            return res.status(400).send({ error: "Product not ready" })
+            return res.status(200).send({ msg: "Product not ready" })
         }
     } catch (error) {
         return res.status(400).send({ error })
@@ -174,12 +175,12 @@ const getReceivedOrders = async (req, res) => {
 const manageOrder = async (req, res) => {
     try {
         const id = req.params.orderId
-        const status = req.query.status
+        const choice = req.query.status
         const workspace = await WorkspaceD.findOne({ email: req.auth.user.email })
         const order = await Order.findById(id)
 
         if (order.status === "new") {
-            if (status === 'false') {
+            if (choice === 'false') {
                 order.status = "rejected"
                 await order.save()
                 return res.status(200).send({ msg: "Order rejected" })
@@ -190,7 +191,7 @@ const manageOrder = async (req, res) => {
             })
             
             if(!returnedItem){
-                res.status(200).send({ msg: "Item not in inventory please make an order and give its order id in the order"})
+                return res.status(200).send({ msg: "Item not in inventory please make an order and give its order id in the order"})
             }
 
             const foundItem = await Inventory.findOne({ _id: returnedItem._id })
@@ -225,11 +226,14 @@ const dispatchOrder = async (req, res) => {
             await order.save();
             return res.status(200).send({msg: "order dispatched", order})
         }
-        else if(order.status ==="pending" && !order.has_paid){
+        else if(order.delivery.status === "dispatch"){
+            return res.status(200).send({msg : "Already dispatched"})
+        }
+        else if(!order.has_paid){
             return res.status(200).send({msg : "Please pay first first"})
         }
         else {
-            res.status(200).send({ error: " No such order is issued" })
+            res.status(200).send({ msg: "Order not ready yet" })
         }
     } catch (error) {
         res.status(400).send({ error })
@@ -243,5 +247,8 @@ module.exports = {
     removeSentOrder,
     paySentOrder,
     moveOrder,
-    getInventory
+    getInventory,
+    getReceivedOrders,
+    manageOrder,
+    dispatchOrder
 }

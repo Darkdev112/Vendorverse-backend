@@ -133,7 +133,7 @@ const moveInventory = async(req,res) => {
             const item = new Inventory({
                 product_name : order.product_name,
                 product_quantity : order.product_quantity,
-                product_description : order.product_description,
+                product_details : order.product_details,
                 product_expiry : order.product_expiry,
                 cost_per_unit : order.to_pay/order.product_quantity,
                 ownerSelect : "WorkspaceR",

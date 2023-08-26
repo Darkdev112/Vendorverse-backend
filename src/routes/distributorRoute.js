@@ -11,5 +11,9 @@ router.delete('/removeSentOrderD/:orderId',auth, distributorController.removeSen
 router.patch('/paySentOrderD/:orderId',auth, distributorController.paySentOrder)
 router.patch('/moveOrderD/:orderId',auth, distributorController.moveOrder)
 router.get('/getInventoryD',auth, distributorController.getInventory)
+router.get('/getReceivedOrdersD',auth, distributorController.getReceivedOrders)
+router.patch('/manageOrderD',auth, distributorController.manageOrder)
+router.patch('/dispatchOrderD',auth, distributorController.dispatchOrder)
+
 
 module.exports = router

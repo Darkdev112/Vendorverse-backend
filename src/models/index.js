@@ -6,6 +6,7 @@ const WorkspaceD = require('./workspaced')
 const WorkspaceM = require('./workspacem')
 const Order = require('./order')
 const Inventory = require('./inventory')
+const Brew = require('./brew')
 
 module.exports = {
     User,
@@ -15,5 +16,6 @@ module.exports = {
     WorkspaceD,
     WorkspaceM,
     Order,
-    Inventory
+    Inventory,
+    Brew,
 }
