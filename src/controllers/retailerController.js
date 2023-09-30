@@ -3,6 +3,7 @@ const { WorkspaceR, Order, Inventory, WorkspaceD} = require('../models')
 const placeOrder = async (req, res) => {
     try {
         const { product_name, product_quantity, email } = req.body;
+        
         const workspace = await WorkspaceR.findOne({ email : req.auth.user.email })
         const workspaceD = await WorkspaceD.findOne({email})
         
@@ -155,8 +156,9 @@ const moveInventory = async(req,res) => {
 const getInventory = async(req,res) => {
     try {
         const workspace = await WorkspaceR.findOne({email : req.auth.user.email})
-        const inventory = await workspace.populate({path : 'inventory'})
-        res.status(200).send({inventory})
+        
+        await workspace.populate({path : 'inventory'})
+        res.status(200).send({inventory : workspace.inventory})
     } catch (error) {
         res.status(400).send({error})
     }

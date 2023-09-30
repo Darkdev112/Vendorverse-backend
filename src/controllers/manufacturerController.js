@@ -1,5 +1,5 @@
 const {WorkspaceM,Order,Inventory, Brew} = require('../models')
-const {agenda} = require('./db/agenda')
+const {agenda} = require('../db/agenda')
 
 const placeOrder =  async (req,res) => {
     try {
@@ -7,7 +7,7 @@ const placeOrder =  async (req,res) => {
         const workspace = await WorkspaceM.findOne({ email:req.auth.user.email})
         const product_expiry = new Date(Date.now() + expires_in * 24 * 60 * 60 * 1000)
 
-        if(workspace.vendorPoints<workspace.vendorPoints-(cost_per_unit * product_quantity)){
+        if(workspace.vendorPoints-(cost_per_unit * product_quantity) < 0){
             return res.status(200).send({msg : "insufficients funds"})
         }
         workspace.vendorPoints = workspace.vendorPoints - (cost_per_unit * product_quantity)
@@ -33,8 +33,9 @@ const placeOrder =  async (req,res) => {
 const getInventory = async (req, res) => {
     try {
         const workspace = await WorkspaceM.findOne({ email: req.auth.user.email })
-        const inventory = await workspace.populate({ path: 'inventory' })
-        res.status(200).send({ inventory })
+
+        await workspace.populate({ path: 'inventory' })
+        res.status(200).send({ inventory: workspace.inventory })
     } catch (error) {
         res.status(400).send({ error })
     }
@@ -55,7 +56,7 @@ const addStructure = async(req,res) => {
         const workspace = await WorkspaceM.findOne({ email: req.auth.user.email })
         const existingStructure = workspace.structures.find((struct)=> struct.structure_name === structure_name)
 
-        if(workspace.vendorPoints<workspace.vendorPoints-(cost_per_unit * structure_quantity)){
+        if(workspace.vendorPoints-(cost_per_unit * structure_quantity)<0){
             return res.status(200).send({msg : "insufficients funds"})
         }
         workspace.vendorPoints = workspace.vendorPoints - cost_per_unit * structure_quantity
@@ -88,6 +89,7 @@ const makeProduct = async(req,res) => {
             product_name,
             product_details,
             expires_in,
+            product_expiry : new Date(Date.now() + expires_in * 24 * 60 * 60 * 1000),
             product_quantity,
             owner : workspace._id
         })
@@ -178,7 +180,7 @@ const setStructureItem = async(req,res) => {
         }) 
 
         if(flag === 0){
-            return res.status(200).send({msg : "Not such structure present"})
+            return res.status(200).send({msg : "No such structure present"})
         }
 
         product.structures.push({structure_name,structure_quantity, step})
@@ -216,16 +218,16 @@ const startBrewingItem = async (req,res) => {
         const product = await Brew.findById(id);
         const workspace = await WorkspaceM.findOne({ email: req.auth.user.email })
 
-        if(product.items.length <= 1 || product.structures.length === 0){
-            return res.status(200).send({msg : "Not sufficient items"})
-        }
-
         if(product.status != "new"){
             return res.status(200).send({msg : "Brewing already happened"})
         }
-
         else{
             product.status = "pending"
+            product.cost_per_unit = 0
+        }
+
+        if(product.items.length <= 1 || product.structures.length === 0){
+            return res.status(200).send({msg : "Not sufficient items"})
         }
 
         product.items.sort((a,b) => {
@@ -238,22 +240,32 @@ const startBrewingItem = async (req,res) => {
             return a.step - b.step
         })
 
+        // console.log(product.items);
+        // console.log(product.structures);
+        // console.log(product.time_taken);
+        // console.log(product.cost_per_unit);
+
+
         const jobs = product.time_taken.map((item,index) => {
             return agenda.define(`Step ${item.step}`,async() =>{
-                while(product.items[product.items.length-1].step === item.step){
+                // console.log("start");
+                while(product.items.length!==0 && product.items[product.items.length-1].step === item.step){
                     const pro = product.items.pop()
-                    product.cost_per_unit = product.cost_per_unit + pro.cost_per_unit
+                    console.log(pro);
+                    product.cost_per_unit = product.cost_per_unit + (pro.cost_per_unit*pro.product_quantity)
                     
                 }
-                while(product.structures[product.structures.length-1].step === item.step){
+                while(product.structures.length!==0 && product.structures[product.structures.length-1].step === item.step){
+                    const current_structure = product.structures.pop()
+                    // console.log(current_structure);
                     workspace.structures.forEach((struct) => {
-                        if(struct.structure_name === product.structures[product.structures.length-1].structure_name){
-                            struct.structure_quantity = struct.structure_quantity + product.structures[product.structures.length-1].structure_quantity
+                        if(struct.structure_name === current_structure.structure_name){
+                            struct.structure_quantity = struct.structure_quantity + current_structure.structure_quantity
                         }
                     })
-                    workspace.structures.pop()
                 }
                 if(index == product.time_taken.length-1){
+                    // console.log("complete");
                     product.status = "completed"
                     product.cost_per_unit = product.cost_per_unit/product.product_quantity
                 }
@@ -265,7 +277,7 @@ const startBrewingItem = async (req,res) => {
         await agenda.start();
 
         product.time_taken.forEach(async(item) => {
-            await agenda.schedule(`${item.time} second`, `Step ${item.step}`);
+            await agenda.schedule(`${item.time} seconds`, `Step ${item.step}`);
         })
 
         res.status(200).send({product, workspace})
@@ -289,6 +301,7 @@ const moveProduct = async (req, res) => {
                 cost_per_unit: product.cost_per_unit,
                 ownerSelect: "WorkspaceM",
                 owner: workspace._id,
+                item_type : "processed"
             })
             await product.deleteOne();
             await item.save();

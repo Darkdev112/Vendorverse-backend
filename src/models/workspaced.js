@@ -12,7 +12,8 @@ const WorkspaceDSchema = new mongoose.Schema({
         ref : 'Profile',
     },
     vendorPoints : {
-        type : Number
+        type : Number,
+        default : 0
     },
 },{
     strict : true,

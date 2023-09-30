@@ -1,8 +1,11 @@
+const  mongoose  = require('mongoose');
 const { WorkspaceD, Order, Inventory, WorkspaceM } = require('../models')
 
 const placeOrder = async (req, res) => {
     try {
-        const { product_name, product_quantity, isOrder, email, order_of } = req.body;
+        const { product_name, product_quantity, isOrder, email, order_of_now } = req.body;
+        
+        const order_of = new mongoose.Types.ObjectId(order_of_now)
         const workspace = await WorkspaceD.findOne({ email: req.auth.user.email })
         const workspaceM = await WorkspaceM.findOne({ email })
         let targetOrder;
@@ -154,8 +157,9 @@ const moveOrder = async (req, res) => {
 const getInventory = async (req, res) => {
     try {
         const workspace = await WorkspaceD.findOne({ email: req.auth.user.email })
-        const inventory = await workspace.populate({ path: 'inventory' })
-        res.status(200).send({ inventory })
+        
+        await workspace.populate({ path: 'inventory' })
+        res.status(200).send({ inventory : workspace.inventory })
     } catch (error) {
         res.status(400).send({ error })
     }
@@ -230,12 +234,13 @@ const dispatchOrder = async (req, res) => {
             return res.status(200).send({msg : "Already dispatched"})
         }
         else if(!order.has_paid){
-            return res.status(200).send({msg : "Please pay first first"})
+            return res.status(200).send({msg : "Please pay first"})
         }
         else {
             res.status(200).send({ msg: "Order not ready yet" })
         }
     } catch (error) {
+        console.log(error);
         res.status(400).send({ error })
     }
 }

@@ -12,7 +12,8 @@ const WorkspaceMSchema = new mongoose.Schema({
         ref : 'Profile',
     },
     vendorPoints : {
-        type : Number
+        type : Number,
+        default : 0
     },
     structures : [{
         structure_name : {
@@ -28,6 +29,10 @@ const WorkspaceMSchema = new mongoose.Schema({
             required : true
         },
     }]
+},{
+    strict : true,
+    versionKey : false,
+    timestamps : true
 })
 
 WorkspaceMSchema.virtual('inventory',{

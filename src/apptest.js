@@ -27,7 +27,7 @@ app.get('/',(req,res) => {
 // })
 
 app.get('/schedule', async (req,res) => {
-    let sum=0;
+    
     let time_taken = [
         {
             time : 1,
@@ -42,7 +42,7 @@ app.get('/schedule', async (req,res) => {
             step : 4,
         },
         {
-            time : 4,
+            time : 10,
             step : 1,
         },
         {
@@ -58,29 +58,31 @@ app.get('/schedule', async (req,res) => {
     console.log("after sorting : ", time_taken);
 
     time_taken.forEach((item) => {
-        agenda.define(`Step ${item.step}`,async() =>{
+        agenda.define(`Step ${item.step}`,async(job) =>{
+            console.log(`here ${job.attrs.name}`);
             const something = new User({
                 username : "testuser",
                 password : "testpassword",
                 email : `some@gmail.com${item.step}` ,
                 occupation : "Manufacturer"
             })
+            await something.save()
         })
     })  
 
-
-    const callthis = async () => {
-        await agenda.start();
+    // const callthis = async () => {
+        let sum=0;
+        agenda.start();
       
         time_taken.forEach(async (item) => {
             sum = sum + item.time; 
             const date = new Date(Date.now() + sum * 1000)
             console.log(date);
-            await agenda.schedule(`${sum} second`, `Step ${item.step}`);
+            agenda.schedule(`${sum} second`, `Step ${item.step}`);
         })
-    }
+    // }
 
-    callthis()
+    // callthis()
 
     res.status(200).send("job started")
 })

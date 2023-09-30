@@ -12,8 +12,8 @@ router.patch('/paySentOrderD/:orderId',auth, distributorController.paySentOrder)
 router.patch('/moveOrderD/:orderId',auth, distributorController.moveOrder)
 router.get('/getInventoryD',auth, distributorController.getInventory)
 router.get('/getReceivedOrdersD',auth, distributorController.getReceivedOrders)
-router.patch('/manageOrderD',auth, distributorController.manageOrder)
-router.patch('/dispatchOrderD',auth, distributorController.dispatchOrder)
+router.patch('/manageOrderD/:orderId',auth, distributorController.manageOrder)
+router.patch('/dispatchOrderD/:orderId',auth, distributorController.dispatchOrder)
 
 
 module.exports = router

@@ -5,9 +5,11 @@ const getProfile = async (req,res) => {
     try {
         const user = req.auth.user;
         const detailedUser = await Profile.findOne({email : user.email});
+
         if(!detailedUser){
             return res.status(200).send({user : null})
         }
+
         res.status(200).send({user : detailedUser})
     } catch (error) {
         res.status(400).send({error})
@@ -18,9 +20,11 @@ const getRequests = async (req,res) => {
     try{
        const user = req.auth.user;
        const detailedUser = await Profile.findOne({email : user.email})
+
        if(!detailedUser || !detailedUser.requests){
          return res.status(200).send({user : null})
        }
+
        await detailedUser.populate({
             path : 'requests',
             select : 'fullname email occupation work profilePic'
@@ -35,39 +39,28 @@ const getConnections = async (req,res) => {
     try{
        const user = req.auth.user;
        const detailedUser = await Profile.findOne({email : user.email})
+
        if(!detailedUser || !detailedUser.connections){
          return res.status(200).send({user : null})
        }
+
        await detailedUser.populate({
         path : 'connections',
         select : 'fullname email occupation work profilePic linkedIn twitter location'
-    })
+       })
        res.status(200).send({user : detailedUser.connections, requests : detailedUser.requests}) 
     }catch (error){
         res.status(400).send({error});
     }
 }
 
-// const createProfile = async (req,res) => {
-//     try {
-//         const user = req.auth.user;
-//         const detailedUser = await Profile.findOne({email : user.email});
-//         if(!detailedUser){
-//             const bodyObj = {...req.body, email : user.email, occupation : user.occupation}
-//             const newDetailedUser = await Profile.create(bodyObj)
-//             return res.status(201).send({user : newDetailedUser})
-//         }
-//         res.status(200).send({user : detailedUser})
-//     } catch (error) {
-//         res.status(400).send({error})
-//     }
-// }
-
 const updateProfile = async (req,res) => {
     try {
         const user = req.auth.user;
         const updatedObj = {...req.body, email : user.email, occupation : user.occupation}
+
         const updatedUser = await Profile.findOneAndUpdate({email : user.email},updatedObj,{new : true});
+
         return res.status(200).send({user : updatedUser})
     } catch (error) {
         return res.status(400).send({error})
@@ -78,17 +71,22 @@ const addRequest = async (req,res) => {
     try {
         const user = await Profile.findOne({email : req.auth.user.email});
         const receiver = await Profile.findOne({email : req.body.email})
+        
         if(!receiver){
             return res.status(200).send({error : 'Not on Vendorverse'});
         }
+
         const existingId = receiver.requests.find((id) => id.equals(user._id))
         const existingConnection = receiver.connections.find((id) => id.equals(user._id))
         const existingRequest = user.requests.find((id) => id.equals(receiver._id))
+        
         if(existingId || existingConnection || existingRequest){
             return res.status(200).send({error : 'request send already'})
         }
+
         receiver.requests[receiver.requests.length] = user._id;
         await receiver.populate({path : 'requests'})
+        
         const updatedObject = await receiver.save()
         return res.status(200).send({user : updatedObject})
     } catch (error) {
@@ -103,6 +101,7 @@ const manageRequest = async(req,res) => {
         
         const userDetails = await Profile.findOne({email : user.email})
         const senderDetails = await Profile.findById(req.body.id)
+
         if(!senderDetails){
             return res.status(404).send({error : "sender does not exist"})
         }
@@ -114,6 +113,7 @@ const manageRequest = async(req,res) => {
         if(existingIdArray.length !== (userDetails.requests.length - 1)){
             return res.status(404).send({error : "request does not exist"})
         }
+
         userDetails.requests= [...existingIdArray];
         if(req.query.success === 'true'){
             userDetails.connections[userDetails.connections.length] = requestId;
@@ -132,7 +132,6 @@ const manageRequest = async(req,res) => {
 
 module.exports = {
     getProfile,
-    // createProfile,
     updateProfile,
     addRequest,
     manageRequest,
