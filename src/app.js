@@ -1,29 +1,36 @@
-const path = require('path')
-const dotenv = require('dotenv').config({path : path.join(__dirname , '../config/dev.env')})
 const express = require('express')
 const cors = require('cors')
-const cookieParser = require('cookie-parser')
-const {userRoute, profileRoute, retailerRoute, distributorRoute, manufacturerRoute} = require('./routes')
+const config = require('./config/config')
+const morgan = require("./config/morgan");
+const {userRoute, profileRoute, retailerRoute, distributorRoute, manufacturerRoute} = require('./api/routes')
+const {globalErrorHandler} = require('./api/middlewares')
 
-require('./db/mongoose')
-const app = express()
+const appLoader = async(app) => {
+    app.get('/',(req,res) => {
+        res.status(200).end()
+    })
+    app.head('/',(req,res) => {
+        res.status(200).end()
+    })
 
-app.use(express.json())
-app.use(cookieParser())
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-}))
+    if(config.mode !== "test"){
+        app.use(morgan.successHandler);
+        app.use(morgan.errorHandler);
+    }
+    
+    app.use(express.json())
+    app.use(cors({
+        origin : config.client_url
+    }))
+    app.use(express.urlencoded({ extended: true }));
+    
+    app.use(userRoute)
+    app.use(profileRoute)
+    app.use(retailerRoute)
+    app.use(distributorRoute)
+    app.use(manufacturerRoute)
+    
+    app.use(globalErrorHandler)
+}
 
-app.use(userRoute);
-app.use(profileRoute);
-app.use(retailerRoute);
-app.use(distributorRoute);
-app.use(manufacturerRoute)
-
-app.get('/', async (req,res) => {
-    res.status(200).send("Express App")
-})
-
-
-module.exports= app
+module.exports = appLoader
