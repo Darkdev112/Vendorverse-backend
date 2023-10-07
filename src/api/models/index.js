@@ -1,5 +1,4 @@
 const User = require('./user')
-const Session = require('./session')
 const Profile = require('./profile')
 const WorkspaceR = require('./workspacer')
 const WorkspaceD = require('./workspaced')
@@ -10,7 +9,6 @@ const Brew = require('./brew')
 
 module.exports = {
     User,
-    Session,
     Profile,
     WorkspaceR,
     WorkspaceD,

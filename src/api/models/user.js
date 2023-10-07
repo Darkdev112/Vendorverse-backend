@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 const bcrypt = require("bcrypt")
-const uuid = require('uuid')
-const Session = require("./session")
+const jwt = require('jsonwebtoken')
+const config = require('../../config/config')
 
 const UserSchema = new mongoose.Schema({
     username : {
@@ -24,7 +24,11 @@ const UserSchema = new mongoose.Schema({
     occupation : {
         type : String,
         required : true
-    }
+    },
+    tokens : [{
+        type : String,
+        required : true
+    }]
 },{
     strict : true,
     versionKey : false,
@@ -32,15 +36,15 @@ const UserSchema = new mongoose.Schema({
 })
 
 
-UserSchema.methods.generateCookie = async function(){
+UserSchema.methods.generateToken = async function(){
     const user = this
-    const sessionToken = uuid.v4();
-    const date= new Date()
-    const expiresAt = date.setTime(date.getTime() + ( 24 * 60 * 60 * 1000 ))
-    const newSession = new Session({sessionToken, expiresAt, userId : user._id})
-    await newSession.save();
-    
-    return newSession 
+    const token = jwt.sign({username : user.username, email : user.email},config.jwt_secret,{
+        expiresIn : 86400
+    })
+
+    user.tokens = user.tokens.concat(token)
+    await user.save()
+    return token
 }
 
 
@@ -61,9 +65,7 @@ UserSchema.statics.findByCredentials = async(email , password) => {
 
 UserSchema.pre('save', async function(next){
     const user = this
-    // console.log(user);
     if(user.isModified('password')){
-        // console.log(user.password);
         user.password = await bcrypt.hash(user.password, 8)
     }
     next()

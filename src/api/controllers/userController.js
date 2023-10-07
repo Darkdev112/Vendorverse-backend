@@ -1,4 +1,4 @@
-const { User, Session, Profile, WorkspaceM, WorkspaceD, WorkspaceR } = require('../models')
+const { User, Profile, WorkspaceM, WorkspaceD, WorkspaceR } = require('../models')
 const { asyncErrorHandler } = require('../helpers');
 
 const signup = asyncErrorHandler(async (req, res) => {
@@ -16,22 +16,19 @@ const signup = asyncErrorHandler(async (req, res) => {
         workspace = new WorkspaceR({ email: req.body.email, owner: profile._id })
     }
 
-    const { sessionToken, expiresAt } = await user.generateCookie()
+    const token = await user.generateToken()
 
     await user.save();
     await profile.save();
     await workspace.save();
-    res.cookie('session_token', sessionToken, { maxAge: expiresAt })
-    res.status(201).send({ user, sessionToken })
+    res.status(201).send({ user, token })
 })
 
 const login = asyncErrorHandler(async (req, res) => {
     const user = await User.findByCredentials(req.body.email, req.body.password)
 
-    const { sessionToken, expiresAt } = await user.generateCookie()
-
-    res.cookie('session_token', sessionToken, { maxAge: expiresAt })
-    res.status(200).send({ user, sessionToken })
+    const token = await user.generateToken()
+    res.status(200).send({ user, token })
 })
 
 const getUser = asyncErrorHandler(async (req, res) => {
@@ -39,14 +36,23 @@ const getUser = asyncErrorHandler(async (req, res) => {
 })
 
 const logout = asyncErrorHandler(async (req, res) => {
-    await Session.findOneAndDelete({ sessionToken: req.auth.sessionToken })
-    res.clearCookie('session_token')
-    res.status(200).send("logged out")
+    req.auth.user.tokens = req.auth.user.tokens.filter((token) => {
+        return token !== req.auth.token
+    })
+    await req.auth.user.save()
+    res.status(200).json({ msg: "logged out" })
+})
+
+const logoutAll = asyncErrorHandler(async (req, res) => {
+    req.auth.user.tokens = []
+    await req.auth.user.save()
+    res.status(200).json({ msg: "logged out everywhere" })
 })
 
 module.exports = {
     login,
     signup,
     getUser,
-    logout
+    logout,
+    logoutAll
 }

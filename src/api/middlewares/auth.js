@@ -1,25 +1,25 @@
-const { User, Session } = require('../models')
+const jwt = require('jsonwebtoken')
+const {User} = require('../models')
+const config = require('../../config/config')
 const { CustomError } = require('../helpers')
 
 const auth = async (req, res, next) => {
     try {
-        const sessionToken = req.headers.authorization
-        const session = await Session.findOne({ sessionToken })
-
-        if (!session) {
+        const authToken = req.headers.authorization
+        if(!authToken || !authToken.startsWith('Bearer ')){
             throw new CustomError('Unauthorised Error', 401)
         }
+        const token = authToken.split(' ')[1]
+        const {email}= jwt.verify(token, config.jwt_secret)
 
-        if (session.expiresAt < ((new Date()).getTime())) {
-            await Session.findByIdAndDelete(session._id)
+        const user = await User.findOne({email, tokens : token})
+        if(!user){
             throw new CustomError('Unauthorised Error', 401)
         }
-
-        await session.populate('userId')
 
         req.auth = {
-            user: session.userId,
-            sessionToken: sessionToken
+            user,
+            token
         }
         next()
     } catch (error) {
