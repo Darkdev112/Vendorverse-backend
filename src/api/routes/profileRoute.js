@@ -11,6 +11,7 @@ router.patch('/manageRequest', auth, profileController.manageRequest)
 router.get('/getRequests', auth, profileController.getRequests)
 router.get('/getConnections', auth, profileController.getConnections)
 router.patch('/addVendorPoints', auth, profileController.addVendorPoints)
+router.get('/getVendorPoints', auth, profileController.getVendorPoints)
 
 
 module.exports = router

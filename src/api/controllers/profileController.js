@@ -18,7 +18,7 @@ const getRequests = asyncErrorHandler(async (req, res) => {
     const detailedUser = await Profile.findOne({ email: user.email })
 
     if (!detailedUser || !detailedUser.requests) {
-        return res.status(200).send({ user: null })
+        return res.status(200).send({ user: [] })
     }
 
     await detailedUser.populate({
@@ -33,7 +33,7 @@ const getConnections = asyncErrorHandler(async (req, res) => {
     const detailedUser = await Profile.findOne({ email: user.email })
 
     if (!detailedUser || !detailedUser.connections) {
-        return res.status(200).send({ user: null })
+        return res.status(200).send({ user: [] })
     }
 
     await detailedUser.populate({
@@ -131,6 +131,30 @@ const addVendorPoints = asyncErrorHandler (async (req,res) => {
     res.status(200).send({workspace})
 })
 
+const getVendorPoints = asyncErrorHandler (async (req,res) => {
+    const {occupation, email} = req.auth.user
+    let workspace
+
+    switch(occupation){
+        case "Manufacturer":
+            workspace = await WorkspaceM.findOne({email})
+            break;
+        
+        case "Distributor":
+            workspace = await WorkspaceD.findOne({email})
+            break;
+
+        case "Retailer":
+            workspace = await WorkspaceR.findOne({email})
+            break;
+
+        default:
+            throw new CustomError('User not found', 404)
+    }
+
+    res.status(200).send({points : workspace.vendorPoints})
+})
+
 
 module.exports = {
     getProfile,
@@ -139,5 +163,6 @@ module.exports = {
     manageRequest,
     getRequests,
     getConnections,
-    addVendorPoints
+    addVendorPoints,
+    getVendorPoints
 }

@@ -1,4 +1,4 @@
-const { WorkspaceR, Order, Inventory, WorkspaceD } = require('../models')
+const { Profile, WorkspaceR, Order, Inventory, WorkspaceD } = require('../models')
 const { asyncErrorHandler } = require('../helpers');
 
 const placeOrder = asyncErrorHandler(async (req, res) => {
@@ -6,6 +6,24 @@ const placeOrder = asyncErrorHandler(async (req, res) => {
 
     const workspace = await WorkspaceR.findOne({ email: req.auth.user.email })
     const workspaceD = await WorkspaceD.findOne({ email })
+
+    const profileR = await Profile.findOne({ email : req.auth.user.email})
+    const profileD = await Profile.findOne({ email})
+
+
+    if(!workspaceD){
+        return res.status(200).send({error : 'Could not find user'})
+    }
+    
+    const common = profileR.connections.map((connection,index) => {
+        if(connection.equals(profileD.id)){
+            return connection
+        }
+    })
+    
+    if(!common[0]){
+        return res.status(200).send({error : 'Not a connection yet'})
+    }
 
     const order = new Order({
         product_name,
