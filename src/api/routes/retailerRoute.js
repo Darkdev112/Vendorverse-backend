@@ -12,5 +12,6 @@ router.patch('/payOrderR/:orderId',auth, retailerController.payOrder)
 router.patch('/trackOrderR/:orderId',auth, retailerController.trackOrder)
 router.patch('/moveInventoryR/:orderId',auth, retailerController.moveInventory)
 router.get('/getInventoryR',auth, retailerController.getInventory)
+router.post('/getDistributorName',auth, retailerController.getDistributorName)
 
 module.exports = router

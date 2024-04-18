@@ -15,13 +15,14 @@ const placeOrder = asyncErrorHandler(async (req, res) => {
         return res.status(200).send({error : 'Could not find user'})
     }
     
-    const common = profileR.connections.map((connection,index) => {
+    let flag = false;
+    profileR.connections.forEach((connection,index) => {
         if(connection.equals(profileD.id)){
-            return connection
+            flag=true;
         }
     })
     
-    if(!common[0]){
+    if(!flag){
         return res.status(200).send({error : 'Not a connection yet'})
     }
 
@@ -150,6 +151,15 @@ const getInventory = asyncErrorHandler(async (req, res) => {
     res.status(200).send({ inventory: workspace.inventory })
 })
 
+const getDistributorName = asyncErrorHandler(async (req, res) => {
+    const workspace = await WorkspaceD.findOne({ email : req.body.email })
+    if(!workspace){
+        return res.status(200).send({error : "no such users"})
+    }
+    await workspace.populate({ path: 'owner' })
+    res.status(200).send({ id : workspace.id, name : workspace.owner.fullname })
+})
+
 module.exports = {
     placeOrder,
     getOrders,
@@ -158,5 +168,6 @@ module.exports = {
     payOrder,
     trackOrder,
     moveInventory,
-    getInventory
+    getInventory,
+    getDistributorName
 }
